@@ -5,6 +5,7 @@ Notes:
 """
 import os
 import numpy as np
+from functools import cached_property
 
 
 class ROM(object):
@@ -44,37 +45,37 @@ class ROM(object):
     # MARK: Header
     #
 
-    @property
+    @cached_property
     def header(self):
         """Return the header of the ROM file as bytes."""
         return self.raw_data[:16]
 
-    @property
+    @cached_property
     def _magic(self):
         """Return the magic bytes in the first 4 bytes."""
         return self.header[:4]
 
-    @property
+    @cached_property
     def prg_rom_size(self):
         """Return the size of the PRG ROM in KB."""
-        return 16 * self.header[4]
+        return 16 * int(self.header[4])
 
-    @property
+    @cached_property
     def chr_rom_size(self):
         """Return the size of the CHR ROM in KB."""
-        return 8 * self.header[5]
+        return 8 * int(self.header[5])
 
-    @property
+    @cached_property
     def flags_6(self):
         """Return the flags at the 6th byte of the header."""
         return '{:08b}'.format(self.header[6])
 
-    @property
+    @cached_property
     def flags_7(self):
         """Return the flags at the 7th byte of the header."""
         return '{:08b}'.format(self.header[7])
 
-    @property
+    @cached_property
     def prg_ram_size(self):
         """Return the size of the PRG RAM in KB."""
         size = self.header[8]
@@ -84,12 +85,12 @@ class ROM(object):
 
         return 8 * size
 
-    @property
+    @cached_property
     def flags_9(self):
         """Return the flags at the 9th byte of the header."""
         return '{:08b}'.format(self.header[9])
 
-    @property
+    @cached_property
     def flags_10(self):
         """
         Return the flags at the 10th byte of the header.
@@ -101,7 +102,7 @@ class ROM(object):
         """
         return '{:08b}'.format(self.header[10])
 
-    @property
+    @cached_property
     def _zero_fill(self):
         """Return the zero fill bytes at the end of the header."""
         return self.header[11:].sum()
@@ -110,33 +111,33 @@ class ROM(object):
     # MARK: Header Flags
     #
 
-    @property
+    @cached_property
     def mapper(self):
         """Return the mapper number this ROM uses."""
         # the high nibble is in flags 7, the low nibble is in flags 6
         return int(self.flags_7[:4] + self.flags_6[:4], 2)
 
-    @property
+    @cached_property
     def is_ignore_mirroring(self):
         """Return a boolean determining if the ROM ignores mirroring."""
         return bool(int(self.flags_6[4]))
 
-    @property
+    @cached_property
     def has_trainer(self):
         """Return a boolean determining if the ROM has a trainer block."""
         return bool(int(self.flags_6[5]))
 
-    @property
+    @cached_property
     def has_battery_backed_ram(self):
         """Return a boolean determining if the ROM has a battery-backed RAM."""
         return bool(int(self.flags_6[6]))
 
-    @property
+    @cached_property
     def is_vertical_mirroring(self):
         """Return the mirroring mode this ROM uses."""
         return bool(int(self.flags_6[7]))
 
-    @property
+    @cached_property
     def has_play_choice_10(self):
         """
         Return whether this cartridge uses PlayChoice-10.
@@ -148,7 +149,7 @@ class ROM(object):
         """
         return bool(int(self.flags_7[6]))
 
-    @property
+    @cached_property
     def has_vs_unisystem(self):
         """
         Return whether this cartridge has VS Uni-system.
@@ -160,7 +161,7 @@ class ROM(object):
         """
         return bool(int(self.flags_7[7]))
 
-    @property
+    @cached_property
     def is_pal(self):
         """Return the TV system this ROM supports."""
         return bool(int(self.flags_9[7]))
@@ -169,12 +170,12 @@ class ROM(object):
     # MARK: ROM
     #
 
-    @property
+    @cached_property
     def trainer_rom_start(self):
         """The inclusive starting index of the trainer ROM."""
         return 16
 
-    @property
+    @cached_property
     def trainer_rom_stop(self):
         """The exclusive stopping index of the trainer ROM."""
         if self.has_trainer:
@@ -182,22 +183,22 @@ class ROM(object):
         else:
             return 16
 
-    @property
+    @cached_property
     def trainer_rom(self):
         """Return the trainer ROM of the ROM file."""
         return self.raw_data[self.trainer_rom_start:self.trainer_rom_stop]
 
-    @property
+    @cached_property
     def prg_rom_start(self):
         """The inclusive starting index of the PRG ROM."""
         return self.trainer_rom_stop
 
-    @property
+    @cached_property
     def prg_rom_stop(self):
         """The exclusive stopping index of the PRG ROM."""
         return self.prg_rom_start + self.prg_rom_size * 2**10
 
-    @property
+    @cached_property
     def prg_rom(self):
         """Return the PRG ROM of the ROM file."""
         try:
@@ -205,17 +206,17 @@ class ROM(object):
         except IndexError:
             raise ValueError('failed to read PRG-ROM on ROM.')
 
-    @property
+    @cached_property
     def chr_rom_start(self):
         """The inclusive starting index of the CHR ROM."""
-        return self.prg_rom_stop
+        return int(self.prg_rom_stop)
 
-    @property
+    @cached_property
     def chr_rom_stop(self):
         """The exclusive stopping index of the CHR ROM."""
         return self.chr_rom_start + self.chr_rom_size * 2**10
 
-    @property
+    @cached_property
     def chr_rom(self):
         """Return the CHR ROM of the ROM file."""
         try:
