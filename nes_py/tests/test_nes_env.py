@@ -79,8 +79,9 @@ class ShouldStepEnv(TestCase):
         for _ in range(500):
             if done:
                 # reset the environment and check the output value
-                state = env.reset()
+                state, info = env.reset()
                 self.assertIsInstance(state, np.ndarray)
+                self.assertIsInstance(info, dict)
             # sample a random action and check it
             action = env.action_space.sample()
             self.assertIsInstance(action, int)
