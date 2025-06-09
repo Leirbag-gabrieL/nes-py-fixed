@@ -58,7 +58,7 @@ void MainBus::write(NES_Address address, NES_Byte value) {
             else
                 LOG(InfoVerbose) << "No write callback registered for I/O register at: " << std::hex << +address << std::endl;
         } else {
-            LOG(InfoVerbose) << "Write access attmept at: " << std::hex << +address << std::endl;
+            LOG(InfoVerbose) << "Write access attempt at: " << std::hex << +address << std::endl;
         }
     } else if (address < 0x6000) {
         LOG(InfoVerbose) << "Expansion ROM access attempted. This is currently unsupported" << std::endl;

@@ -1,15 +1,13 @@
 """A simple class for viewing images using pyglet."""
 
 
-class ImageViewer(object):
+class ImageViewer:
     """A simple class for viewing images using pyglet."""
 
-    def __init__(self, caption, height, width,
-        monitor_keyboard=False,
-        relevant_keys=None
+    def __init__(
+        self, caption, height, width, monitor_keyboard=False, relevant_keys=None
     ):
-        """
-        Initialize a new image viewer.
+        """Initialize a new image viewer.
 
         Args:
             caption (str): the caption/title for the window
@@ -23,17 +21,19 @@ class ImageViewer(object):
         """
         # detect if rendering from python threads and fail
         import threading
+
         if threading.current_thread() is not threading.main_thread():
-            msg = 'rendering from python threads is not supported'
+            msg = "rendering from python threads is not supported"
             raise RuntimeError(msg)
         # import pyglet within class scope to resolve issues with how pyglet
         # interacts with OpenGL while using multiprocessing
         import pyglet
+
         self.pyglet = pyglet
         # a mapping from pyglet key identifiers to native identifiers
         self.KEY_MAP = {
-            self.pyglet.window.key.ENTER: ord('\r'),
-            self.pyglet.window.key.SPACE: ord(' '),
+            self.pyglet.window.key.ENTER: ord("\r"),
+            self.pyglet.window.key.SPACE: ord(" "),
         }
         self.caption = caption
         self.height = height
@@ -60,8 +60,7 @@ class ImageViewer(object):
         return tuple(sorted(self._pressed_keys))
 
     def _handle_key_event(self, symbol, is_press):
-        """
-        Handle a key event.
+        """Handle a key event.
 
         Args:
             symbol: the symbol in the event
@@ -112,13 +111,12 @@ class ImageViewer(object):
 
     def close(self):
         """Close the window."""
-        if self.is_open:
+        if self._window is not None:
             self._window.close()
             self._window = None
 
     def show(self, frame):
-        """
-        Show an array of pixels on the window.
+        """Show an array of pixels on the window.
 
         Args:
             frame (numpy.ndarray): the frame to show on the window
@@ -128,10 +126,23 @@ class ImageViewer(object):
         """
         # check that the frame has the correct dimensions
         if len(frame.shape) != 3:
-            raise ValueError('frame should have shape with only 3 dimensions')
+            raise ValueError("frame should have shape with only 3 dimensions")
         # open the window if it isn't open already
-        if not self.is_open:
-            self.open()
+        if self._window is None:
+            # create a window for this image viewer instance
+            self._window = self.pyglet.window.Window(
+                caption=self.caption,
+                height=self.height,
+                width=self.width,
+                vsync=False,
+                resizable=True,
+            )
+
+        # add keyboard event monitors if enabled
+        if self.monitor_keyboard:
+            self._window.event(self.on_key_press)
+            self._window.event(self.on_key_release)
+
         # prepare the window for the next frame
         self._window.clear()
         self._window.switch_to()
@@ -140,9 +151,9 @@ class ImageViewer(object):
         image = self.pyglet.image.ImageData(
             frame.shape[1],
             frame.shape[0],
-            'RGB',
+            "RGB",
             frame.tobytes(),
-            pitch=frame.shape[1]*-3
+            pitch=frame.shape[1] * -3,
         )
         # send the image to the window
         image.blit(0, 0, width=self._window.width, height=self._window.height)
@@ -150,4 +161,4 @@ class ImageViewer(object):
 
 
 # explicitly define the outward facing API of this module
-__all__ = [ImageViewer.__name__]
+__all__ = [ImageViewer.__name__]  # pyright: ignore [reportUnsupportedDunderAll]

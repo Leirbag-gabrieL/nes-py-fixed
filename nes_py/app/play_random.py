@@ -1,10 +1,10 @@
 """Methods for playing the game randomly, or as a human."""
+
 from tqdm import tqdm
 
 
 def play_random(env, steps):
-    """
-    Play the environment making uniformly random decisions.
+    """Play the environment making uniformly random decisions.
 
     Args:
         env (gym.Env): the initialized gym environment to play
@@ -15,13 +15,14 @@ def play_random(env, steps):
 
     """
     try:
-        done = True
+        terminated = True
+        truncated = True
         progress = tqdm(range(steps))
         for _ in progress:
-            if done:
+            if terminated or truncated:
                 _ = env.reset()
             action = env.action_space.sample()
-            _, reward, done, info = env.step(action)
+            _, reward, terminated, truncated, info = env.step(action)
             progress.set_postfix(reward=reward, info=info)
             env.render()
     except KeyboardInterrupt:
@@ -31,4 +32,4 @@ def play_random(env, steps):
 
 
 # explicitly define the outward facing API of this module
-__all__ = [play_random.__name__]
+__all__ = [play_random.__name__]  # pyright: ignore [reportUnsupportedDunderAll]

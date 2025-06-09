@@ -3,12 +3,14 @@
 Notes:
     - http://wiki.nesdev.com/w/index.php/INES
 """
+
 import os
-import numpy as np
 from functools import cached_property
 
+import numpy as np
 
-class ROM(object):
+
+class ROM:
     """An abstraction of the NES Read-Only Memory (ROM)."""
 
     # the magic bytes expected at the first four bytes of the header.
@@ -16,8 +18,7 @@ class ROM(object):
     _MAGIC = np.array([0x4E, 0x45, 0x53, 0x1A])
 
     def __init__(self, rom_path):
-        """
-        Initialize a new ROM.
+        """Initialize a new ROM.
 
         Args:
             rom_path (str): the path to the ROM file
@@ -28,16 +29,16 @@ class ROM(object):
         """
         # make sure the rom path is a string
         if not isinstance(rom_path, str):
-            raise TypeError('rom_path must be of type: str.')
+            raise TypeError("rom_path must be of type: str.")
         # make sure the rom path exists
         if not os.path.exists(rom_path):
-            msg = 'rom_path points to non-existent file: {}.'.format(rom_path)
+            msg = f"rom_path points to non-existent file: {rom_path}."
             raise ValueError(msg)
         # read the binary data in the .nes ROM file
-        self.raw_data = np.fromfile(rom_path, dtype='uint8')
+        self.raw_data = np.fromfile(rom_path, dtype="uint8")
         # ensure the first 4 bytes are 0x4E45531A (NES<EOF>)
         if not np.array_equal(self._magic, self._MAGIC):
-            raise ValueError('ROM missing magic number in header.')
+            raise ValueError("ROM missing magic number in header.")
         if self._zero_fill != 0:
             raise ValueError("ROM header zero fill bytes are not zero.")
 
@@ -68,12 +69,12 @@ class ROM(object):
     @cached_property
     def flags_6(self):
         """Return the flags at the 6th byte of the header."""
-        return '{:08b}'.format(self.header[6])
+        return f"{self.header[6]:08b}"
 
     @cached_property
     def flags_7(self):
         """Return the flags at the 7th byte of the header."""
-        return '{:08b}'.format(self.header[7])
+        return f"{self.header[7]:08b}"
 
     @cached_property
     def prg_ram_size(self):
@@ -88,19 +89,18 @@ class ROM(object):
     @cached_property
     def flags_9(self):
         """Return the flags at the 9th byte of the header."""
-        return '{:08b}'.format(self.header[9])
+        return f"{self.header[9]:08b}"
 
     @cached_property
     def flags_10(self):
-        """
-        Return the flags at the 10th byte of the header.
+        """Return the flags at the 10th byte of the header.
 
         Notes:
             - these flags are not part of official specification.
             - ignored in this emulator
 
         """
-        return '{:08b}'.format(self.header[10])
+        return f"{self.header[10]:08b}"
 
     @cached_property
     def _zero_fill(self):
@@ -139,8 +139,7 @@ class ROM(object):
 
     @cached_property
     def has_play_choice_10(self):
-        """
-        Return whether this cartridge uses PlayChoice-10.
+        """Return whether this cartridge uses PlayChoice-10.
 
         Note:
             - Play-Choice 10 uses different color palettes for a different PPU
@@ -151,8 +150,7 @@ class ROM(object):
 
     @cached_property
     def has_vs_unisystem(self):
-        """
-        Return whether this cartridge has VS Uni-system.
+        """Return whether this cartridge has VS Uni-system.
 
         Note:
             VS Uni-system is for ROMs that have a coin slot (Arcades).
@@ -186,7 +184,7 @@ class ROM(object):
     @cached_property
     def trainer_rom(self):
         """Return the trainer ROM of the ROM file."""
-        return self.raw_data[self.trainer_rom_start:self.trainer_rom_stop]
+        return self.raw_data[self.trainer_rom_start : self.trainer_rom_stop]
 
     @cached_property
     def prg_rom_start(self):
@@ -202,9 +200,9 @@ class ROM(object):
     def prg_rom(self):
         """Return the PRG ROM of the ROM file."""
         try:
-            return self.raw_data[self.prg_rom_start:self.prg_rom_stop]
+            return self.raw_data[self.prg_rom_start : self.prg_rom_stop]
         except IndexError:
-            raise ValueError('failed to read PRG-ROM on ROM.')
+            raise ValueError("failed to read PRG-ROM on ROM.")
 
     @cached_property
     def chr_rom_start(self):
@@ -220,10 +218,10 @@ class ROM(object):
     def chr_rom(self):
         """Return the CHR ROM of the ROM file."""
         try:
-            return self.raw_data[self.chr_rom_start:self.chr_rom_stop]
+            return self.raw_data[self.chr_rom_start : self.chr_rom_stop]
         except IndexError:
-            raise ValueError('failed to read CHR-ROM on ROM.')
+            raise ValueError("failed to read CHR-ROM on ROM.")
 
 
 # explicitly define the outward facing API of this module
-__all__ = [ROM.__name__]
+__all__ = [ROM.__name__]  # pyright: ignore [reportUnsupportedDunderAll]

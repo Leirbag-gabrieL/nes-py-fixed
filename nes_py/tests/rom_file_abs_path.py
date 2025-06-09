@@ -1,10 +1,10 @@
 """A method to get absolute paths of game ROMs."""
+
 import os
 
 
 def rom_file_abs_path(file_name):
-    """
-    Return the absolute path to a ROM in the games directory.
+    """Return the absolute path to a ROM in the games directory.
 
     Args:
         file_name (str): the name of the ROM in the games directory to fetch
@@ -16,7 +16,7 @@ def rom_file_abs_path(file_name):
     # the directory of this file
     dir_path = os.path.dirname(os.path.realpath(__file__))
     # the absolute path to the given ROM file
-    game_path = '{}/games/{}'.format(dir_path, file_name)
+    game_path = f"{dir_path}/games/{file_name}"
 
     return game_path
 
