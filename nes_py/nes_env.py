@@ -148,6 +148,8 @@ class NESEnv(gym.Env):
         self._has_backup = False
         # setup a terminated flag
         self.terminated = True
+        # setup a truncated flag
+        self.truncated = True
         # setup the controllers, screen, and RAM buffers
         self.controllers = [self._controller_buffer(port) for port in range(2)]
         self.screen = self._screen_buffer()
@@ -272,6 +274,8 @@ class NESEnv(gym.Env):
         self._did_reset()
         # set the terminated flag to false
         self.terminated = False
+        # set the truncated flag to false
+        self.truncated = False
         # reset the current episode steps
         self.current_episode_steps = 0
         # return the screen from the emulator and the info dictionary
@@ -297,10 +301,14 @@ class NESEnv(gym.Env):
 
         """
         # if the environment is terminated, raise an error
-        if self.terminated:
-            raise ValueError("cannot step in a terminated environment! call `reset`")
+        if self.terminated or self.truncated:
+            raise ValueError(
+                "cannot step in a terminated or truncated environment! call `reset`"
+            )
         # set the action on the controller
         self.controllers[0][:] = action
+        # increment the current episode steps
+        self.current_episode_steps += 1
         # pass the action to the emulator as an unsigned byte
         _LIB.Step(self._env)
         # get the reward for this step
@@ -309,27 +317,28 @@ class NESEnv(gym.Env):
         self.terminated = bool(self._get_terminated())
         # get the info for this step
         info = self._get_info()
-        # call the after step callback
-        self._did_step(self.terminated)
         # bound the reward in [min, max]
         if reward < self.reward_range[0]:
             reward = self.reward_range[0]
         elif reward > self.reward_range[1]:
             reward = self.reward_range[1]
-        # increment the current episode steps
-        self.current_episode_steps += 1
         # check whether the episode should be truncated
-        truncated = False
+        self.truncated = False
         if (
             self.max_episode_steps is not None
             and not self.terminated
             and self.current_episode_steps >= self.max_episode_steps
         ):
-            truncated = True
+            self.truncated = True
         if self.truncate_function is not None and not self.terminated:
-            truncated = truncated or self.truncate_function(self, reward, info)
+            self.truncated = self.truncated or self.truncate_function(
+                self, reward, info
+            )
+
+        # call the after step callback
+        self._did_step(self.terminated or self.truncated)
         # return the screen from the emulator and other relevant data
-        return self.screen, reward, self.terminated, truncated, info
+        return self.screen, reward, self.terminated, self.truncated, info
 
     def _get_reward(self):
         """Return the reward after a step occurs."""
@@ -343,11 +352,11 @@ class NESEnv(gym.Env):
         """Return the info after a step occurs."""
         return {}
 
-    def _did_step(self, terminated):
+    def _did_step(self, will_reset):
         """Handle any RAM hacking after a step occurs.
 
         Args:
-            terminated (bool): whether the terminated flag is set to true
+            will_reset (bool): whether the will_reset flag is set to true
 
         Returns:
             None
