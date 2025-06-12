@@ -73,7 +73,7 @@ class JoypadSpace(Wrapper):
 
     def reset(self, *args, **kwargs):
         """Reset the environment and return the initial observation."""
-        return self.env.reset()
+        return self.env.reset(*args, **kwargs)
 
     def render(self, *args, **kwargs):
         """Render the environment."""
